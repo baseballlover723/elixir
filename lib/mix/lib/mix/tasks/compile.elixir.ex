@@ -90,6 +90,7 @@ defmodule Mix.Tasks.Compile.Elixir do
 
   @impl true
   def run(args) do
+    IO.inspect(manifest(), label: "run manifest")
     {opts, _, _} = OptionParser.parse(args, switches: @switches)
 
     project = Mix.Project.config()
@@ -111,13 +112,22 @@ defmodule Mix.Tasks.Compile.Elixir do
       |> xref_exclude_opts(project)
       |> tracers_opts(tracers)
       |> profile_opts()
+    IO.inspect(File.exists?(manifest()), label: "run manifest exists? 11")
 
-    Mix.Compilers.Elixir.compile(manifest, srcs, dest, [:ex], force, opts)
+    r = Mix.Compilers.Elixir.compile(manifest, srcs, dest, [:ex], force, opts)
+    IO.inspect(File.exists?(manifest()), label: "run manifest exists? 12")
+    r
   end
 
   @impl true
-  def manifests, do: [manifest()]
+  def manifests do
+    m = manifest()
+    IO.inspect(m, label: "manifest")
+    IO.inspect(File.exists?(m), label: "manifest exists?")
+    [m]
+  end
   defp manifest, do: Path.join(Mix.Project.manifest_path(), @manifest)
+#  defp manifest, do: Path.join(Mix.Project.manifest_path(), @manifest)
 
   @impl true
   def clean do

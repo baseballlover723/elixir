@@ -80,6 +80,7 @@ defmodule Mix.Tasks.Compile do
 
   @impl true
   def run(["--list"]) do
+    IO.puts("running my compile")
     # Loadpaths without checks because compilers may be defined in deps.
     args = ["--no-elixir-version-check", "--no-deps-check", "--no-archives-check"]
     Mix.Task.run("loadpaths", args)

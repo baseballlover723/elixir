@@ -150,7 +150,10 @@ defmodule Mix.Utils do
   end
 
   defp stale_stream(sources, targets) do
+    IO.inspect(targets, label: "stale_stream targets")
+    IO.inspect(targets |> Enum.map(&last_modified/1), label: "stale_stream targets last modified")
     modified_target = targets |> Enum.map(&last_modified/1) |> Enum.min()
+    IO.inspect(modified_target, label: "stale_stream modified target")
 
     Stream.filter(sources, fn source ->
       last_modified(source) > modified_target

@@ -30,29 +30,40 @@ defmodule Mix.Compilers.Elixir do
   have changed at runtime.
   """
   def compile(manifest, srcs, dest, exts, force, opts) do
+    IO.inspect([manifest: manifest, srcs: srcs, dest: dest, exts: exts, force: force, opts: opts], label: "compile")
     # We fetch the time from before we read files so any future
     # change to files are still picked up by the compiler. This
     # timestamp is used when writing BEAM files and the manifest.
+    IO.puts("compile 1")
     timestamp = System.os_time(:second)
+    IO.puts("compile 2")
     all_paths = MapSet.new(Mix.Utils.extract_files(srcs, exts))
+    IO.puts("compile 3")
 
     {all_modules, all_sources, all_local_exports} = parse_manifest(manifest, dest)
+    IO.puts("compile 4")
     modified = Mix.Utils.last_modified(manifest)
+    IO.puts("compile 5")
 
     {stale_local_deps, stale_local_mods, stale_local_exports, all_local_exports} =
       stale_local_deps(manifest, modified, all_local_exports)
+    IO.puts("compile 6")
 
     prev_paths = for source(source: source) <- all_sources, into: MapSet.new(), do: source
+    IO.puts("compile 7")
 
     removed =
       prev_paths
       |> MapSet.difference(all_paths)
       |> MapSet.to_list()
+    IO.puts("compile 8")
 
     {modules, exports, changed, sources_stats} =
       if force do
+        IO.puts("compile 9.0")
         compiler_info_from_force(manifest, all_paths, all_modules, dest)
       else
+        IO.puts("compile 9.1")
         compiler_info_from_updated(
           modified,
           all_paths,
@@ -65,16 +76,21 @@ defmodule Mix.Compilers.Elixir do
           dest
         )
       end
+    IO.puts("compile 10")
 
     stale = changed -- removed
+    IO.puts("compile 11")
 
     {sources, removed_modules} =
       removed
       |> Enum.reduce(all_sources, &List.keydelete(&2, &1, source(:source)))
       |> update_stale_sources(stale, sources_stats)
+    IO.puts("compile 12")
 
     if opts[:all_warnings], do: show_warnings(sources)
+    IO.puts("compile 13")
 
+    IO.inspect([stale: stale, removed: removed], label: "compile before cond ****")
     cond do
       stale != [] ->
         Mix.Utils.compiling_n(length(stale), hd(exts))
@@ -123,6 +139,7 @@ defmodule Mix.Compilers.Elixir do
         write_manifest(manifest, [], [], %{}, timestamp)
 
       true ->
+        IO.puts("no op compile")
         {:noop, warning_diagnostics(sources)}
     end
   end
@@ -711,9 +728,11 @@ defmodule Mix.Compilers.Elixir do
   end
 
   defp write_manifest(manifest, modules, sources, exports, timestamp) do
+    IO.inspect(manifest, label: "writing manifest stuff")
     File.mkdir_p!(Path.dirname(manifest))
 
     term = {@manifest_vsn, modules, sources, exports}
+    IO.inspect(term, label: "manifest term")
     manifest_data = :erlang.term_to_binary(term, [:compressed])
     File.write!(manifest, manifest_data)
     File.touch!(manifest, timestamp)
